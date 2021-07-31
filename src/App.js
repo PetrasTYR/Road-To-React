@@ -67,64 +67,29 @@ const storiesReducer = (state, action) => {
 
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
-const getSumComments = stories => {
-  console.log("C");
-
-  return stories.data.reduce(
-    (result, value) => result + value.num_comments,
-    0
-  );
-};
-
-const getLastSearches = urls => urls.slice(-5);
-
 const extractSearchTerm = url => url.replace(API_ENDPOINT, '');
 
-const getLastSearches = urls =>
-  urls.slice(-5).map(url => extractSearchTerm(url));
+
+const getLastSearches = urls => 
+  urls.slice(-6,-1).map(extractSearchTerm);
+
+const getUrl = searchTerm => `${API_ENDPOINT}${searchTerm}`;
+
 
 const App = () => {
 
   // on first load, searchTerm is set to React
   const [searchTerm, setSearchTerm] = useSemiPersistentState('search', 'React');
 
-  // on first load, url is set to https://hn.algolia.com/api/v1/search?query=React
-  const [urls, setUrls] = React.useState([`${API_ENDPOINT}${searchTerm}`,]);
+  // on first load, urls is set to ['https://hn.algolia.com/api/v1/search?query=React']
+  const [urls, setUrls] = React.useState([getUrl(searchTerm)]);
+  console.log(urls);
 
   // on first load, stories is set to { data: [], isLoading: false, isError: false }
   const [stories, dispatchStories] = React.useReducer(
     storiesReducer,
     { data: [], isLoading: false, isError: false }
   );
-
-  const sumComments = React.useMemo(() =>getSumComments(stories), [
-    stories,
-  ]);
-
-  const handleLastSearch = url => {
-
-  };
-
-  const lastSearches = getLastSearches(urls);
-
-  // A
-  // const handleFetchStories = React.useCallback(() => {
-
-  //   dispatchStories({ type: 'STORIES_FETCH_INIT' })
-
-  //   axios
-  //     .get(url)
-  //     // .then(response => response.json())
-  //     .then(result => {
-  //       dispatchStories({
-  //         type: 'STORIES_FETCH_SUCCESS',
-  //         payload: result.data.hits,
-  //       });
-  //     })
-  //     .catch(() => 
-  //       dispatchStories({ type: 'STORIES_FETCH_FAILURE' })
-  //     );
-  // }, [url]); // E
 
   const handleFetchStories = React.useCallback(async () => {
     dispatchStories({ type: 'STORIES_FETCH_INIT' });
@@ -161,32 +126,33 @@ const App = () => {
     setSearchTerm(event.target.value);
   };
 
-  const handleSearchSubmit = event => {
-    const url = `${API_ENDPOINT}${searchTerm}`;
-    setUrls(urls.concat(url));
-
-    event.preventDefault();
-  }
-  const handleLastSearch = searchTerm => {
-    const url = `${API_ENDPOINT}${searchTerm}`;
+  const handleSearch = searchTerm => {
+    const url = getUrl(searchTerm);
     setUrls(urls.concat(url));
   };
 
+  const handleSearchSubmit = event => {
+    handleSearch(searchTerm);
+
+    event.preventDefault();
+  }
+  
+  const handleLastSearch = searchTerm => {
+    handleSearch(searchTerm);
+  };
+
+
+  const lastSearches = getLastSearches(urls);
+
   console.log("B:App");
-
-  // const searchedStories = stories.data.filter(story =>
-  //   story.title.toLowerCase().includes(searchTerm.toLowerCase())
-  // );
-
-  // console.log(searchTerm);
 
   return (
 
     <div className='container'>
       <h1 className="headline-primary">My Hacker Stories</h1>
       <SearchForm searchTerm={searchTerm} onSearchInput={handleSearchInput} onSearchSubmit={handleSearchSubmit} />
-      {lastSearches.map(url => (
-        <button key={searchTerm} type='button' onClick={() => handleLastSearch(searchTerm)}>{searchTerm}</button>
+      {lastSearches.map((searchTerm, index) => (
+        <button key={searchTerm + index} type='button' onClick={() => handleLastSearch(searchTerm)}>{searchTerm}</button>
       ))}
       <hr />
       {stories.isError && <p>Something went wrong ...</p>}
