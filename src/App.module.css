@@ -108,11 +108,6 @@
   font-size: 24px;
 }
 
-.activeButton {
-  background-color: rgb(212, 42, 42);
-  color: black;
-}
-
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
